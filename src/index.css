@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ls-bg: #0A0A0A;
+  --color-ls-bg-light: #111111;
+  --color-ls-bg-card: #1A1A1A;
+  --color-ls-accent: #10B981;
+  --color-ls-accent-hover: #059669;
+
+  --font-orbitron: "Orbitron", sans-serif;
+  --font-inter: "Inter", sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-[var(--color-ls-bg)] text-white font-inter antialiased min-h-screen overflow-x-hidden;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-orbitron font-bold;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply bg-[#111111]/80 backdrop-blur-md border border-white/5 shadow-xl;
+  }
+  .input-field {
+    @apply bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-[var(--color-ls-accent)] focus:ring-1 focus:ring-[var(--color-ls-accent)] transition-all duration-200 placeholder:text-white/30;
+  }
+  .btn-primary {
+    @apply bg-[var(--color-ls-accent)] hover:bg-[var(--color-ls-accent-hover)] text-white font-medium py-2 px-6 rounded-lg transition-colors flex items-center justify-center gap-2;
+  }
+  .btn-secondary {
+    @apply bg-white/5 hover:bg-white/10 border border-white/10 text-white font-medium py-2 px-6 rounded-lg transition-colors flex items-center justify-center gap-2;
+  }
+}
