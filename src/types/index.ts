@@ -30,6 +30,11 @@ export interface Client {
   // Split Payment
   hasSplitPayment: boolean;
   payers: Payer[];
+
+  // Monthly Split (2x)
+  hasMonthlySplit?: boolean;
+  monthlySplitDay1?: number;
+  monthlySplitDay2?: number;
 }
 
 export interface Charge {

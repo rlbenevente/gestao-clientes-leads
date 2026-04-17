@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Client, Charge, ChargeStatus } from '../types';
-import { addMonths, parseISO, isBefore, startOfDay, getMonth, getYear, setDate, isAfter, isSameMonth } from 'date-fns';
+import { addMonths, parseISO, isBefore, startOfDay, getMonth, getYear, setDate, isAfter, isSameMonth, startOfMonth } from 'date-fns';
 
 interface AppState {
   clients: Client[];
@@ -102,30 +102,34 @@ export const useStore = create<AppState>()(
             // Loop from start date up to target month, or just check the target month specifically.
             // Let's generate specifically for the targetDate's month and year.
             
+            // If the target month is before the month of baseDate, skip completely
+            const targetMonthStart = startOfMonth(targetDate);
+            const baseMonthStart = startOfMonth(baseDate);
+            if (isBefore(targetMonthStart, baseMonthStart)) return;
+
             const chargeDateForMonth = setDate(targetDate, baseDate.getDate());
-            
-            // If the charge date for this month is before the client's start date, skip
-            if (isBefore(chargeDateForMonth, startOfDay(baseDate))) return;
 
             const existingCharges = newCharges.filter(c => c.clientId === client.id);
 
             // Helper to add charge if it doesn't exist
-            const addCharge = (desc: string, val: number, isInst = false, instNum?: number, totalInst?: number) => {
+            const addCharge = (desc: string, val: number, isInst = false, instNum?: number, totalInst?: number, customDate?: Date) => {
+               const finalDate = customDate || chargeDateForMonth;
+               
                // A charge is unique by clientId + description + yyyy-mm
                const exists = existingCharges.some(c => 
                   c.description === desc && 
-                  getYear(parseISO(c.dueDate)) === getYear(chargeDateForMonth) && 
-                  getMonth(parseISO(c.dueDate)) === getMonth(chargeDateForMonth)
+                  getYear(parseISO(c.dueDate)) === getYear(finalDate) && 
+                  getMonth(parseISO(c.dueDate)) === getMonth(finalDate)
                );
 
                if (!exists) {
-                   const isPastDueDate = isBefore(startOfDay(chargeDateForMonth), today);
+                   const isPastDueDate = isBefore(startOfDay(finalDate), today);
                    newCharges.push({
                        id: crypto.randomUUID(),
                        clientId: client.id,
                        description: desc,
                        predictedValue: val,
-                       dueDate: chargeDateForMonth.toISOString(),
+                       dueDate: finalDate.toISOString(),
                        status: isPastDueDate ? 'OVERDUE' : 'PENDING',
                        isInstallment: isInst,
                        installmentNumber: instNum,
@@ -136,12 +140,24 @@ export const useStore = create<AppState>()(
 
             // 1. Monthly Management Fee
             if (client.monthlyValue > 0) {
+               const generateStandardOrSplit = (descBase: string, val: number) => {
+                   if (client.hasMonthlySplit && client.monthlySplitDay1 && client.monthlySplitDay2) {
+                       const splitVal = val / 2;
+                       const date1 = setDate(targetDate, client.monthlySplitDay1);
+                       const date2 = setDate(targetDate, client.monthlySplitDay2);
+                       addCharge(`${descBase} — 1ª parcela`, splitVal, false, undefined, undefined, date1);
+                       addCharge(`${descBase} — 2ª parcela`, splitVal, false, undefined, undefined, date2);
+                   } else {
+                       addCharge(descBase, val);
+                   }
+               };
+
                if (client.hasSplitPayment && client.payers && client.payers.length > 0) {
                    client.payers.forEach(p => {
-                       addCharge(`Mensalidade (${p.name})`, p.value);
+                       generateStandardOrSplit(`Mensalidade (${p.name})`, p.value);
                    });
                } else {
-                   addCharge('Mensalidade', client.monthlyValue);
+                   generateStandardOrSplit('Mensalidade', client.monthlyValue);
                }
             }
 

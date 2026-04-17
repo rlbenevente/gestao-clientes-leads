@@ -34,6 +34,11 @@ export default function ClientForm() {
   const [hasSplitPayment, setHasSplitPayment] = useState(false);
   const [payers, setPayers] = useState<Payer[]>([]);
 
+  // Monthly Split (2x)
+  const [hasMonthlySplit, setHasMonthlySplit] = useState(false);
+  const [monthlySplitDay1, setMonthlySplitDay1] = useState<number | ''>('');
+  const [monthlySplitDay2, setMonthlySplitDay2] = useState<number | ''>('');
+
   useEffect(() => {
     if (existingClient) {
       setName(existingClient.name);
@@ -54,6 +59,10 @@ export default function ClientForm() {
 
       setHasSplitPayment(existingClient.hasSplitPayment);
       setPayers(existingClient.payers || []);
+
+      setHasMonthlySplit(existingClient.hasMonthlySplit || false);
+      setMonthlySplitDay1(existingClient.monthlySplitDay1 || '');
+      setMonthlySplitDay2(existingClient.monthlySplitDay2 || '');
     }
   }, [existingClient]);
 
@@ -97,7 +106,10 @@ export default function ClientForm() {
       hasMonthlyFee: hasProject ? hasMonthlyFee : undefined,
       monthlyFeeValue: hasProject && hasMonthlyFee ? Number(monthlyFeeValue) : undefined,
       hasSplitPayment,
-      payers: hasSplitPayment ? payers : []
+      payers: hasSplitPayment ? payers : [],
+      hasMonthlySplit,
+      monthlySplitDay1: hasMonthlySplit ? Number(monthlySplitDay1) : undefined,
+      monthlySplitDay2: hasMonthlySplit ? Number(monthlySplitDay2) : undefined
     };
 
     if (isEditing && id) {
@@ -153,10 +165,34 @@ export default function ClientForm() {
                <div className="space-y-2">
                  <label className="text-sm text-white/80 font-medium">Valor Mensal de Gestão (R$) *</label>
                  <input required type="number" step="0.01" className="input-field w-full" value={monthlyValue} onChange={e => setMonthlyValue(Number(e.target.value))} placeholder="Ex: 1500.00" />
+                 
+                 <div className="mt-3 flex flex-col gap-2 p-3 bg-white/5 rounded-lg border border-white/10">
+                    <div className="flex items-center gap-2">
+                       <input type="checkbox" id="hasMonthlySplit" className="w-4 h-4 accent-[var(--color-ls-accent)] rounded" checked={hasMonthlySplit} onChange={(e) => setHasMonthlySplit(e.target.checked)} />
+                       <label htmlFor="hasMonthlySplit" className="text-sm text-white font-medium cursor-pointer select-none">Dividir em 2x no mês</label>
+                    </div>
+                    {hasMonthlySplit && (
+                       <div className="grid grid-cols-2 gap-3 mt-2">
+                          <div className="space-y-1">
+                             <label className="text-xs text-white/60">Dia da 1ª parcela</label>
+                             <input required={hasMonthlySplit} type="number" min="1" max="31" className="input-field w-full px-3 py-1 text-sm" value={monthlySplitDay1} onChange={e => setMonthlySplitDay1(Number(e.target.value))} />
+                          </div>
+                          <div className="space-y-1">
+                             <label className="text-xs text-white/60">Dia da 2ª parcela</label>
+                             <input required={hasMonthlySplit} type="number" min="1" max="31" className="input-field w-full px-3 py-1 text-sm" value={monthlySplitDay2} onChange={e => setMonthlySplitDay2(Number(e.target.value))} />
+                          </div>
+                          {monthlyValue !== '' && monthlyValue > 0 && (
+                              <div className="col-span-2 text-xs text-[var(--color-ls-accent)] font-medium mt-1">
+                                  Informativo: 2x de R$ {(Number(monthlyValue) / 2).toFixed(2).replace('.', ',')}
+                              </div>
+                          )}
+                       </div>
+                    )}
+                 </div>
                </div>
 
                <div className="space-y-2">
-                 <label className="text-sm text-white/80 font-medium">Data de Início * (Define o dia de vencimento)</label>
+                 <label className="text-sm text-white/80 font-medium">Data de Início * (Define o mês de vencimento)</label>
                  <input required type="date" className="input-field w-full" value={startDate} onChange={e => setStartDate(e.target.value)} />
                </div>
 
