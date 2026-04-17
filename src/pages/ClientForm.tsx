@@ -7,7 +7,7 @@ import type { Client, ProjectType, Payer } from '../types';
 export default function ClientForm() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { clients, addClient, updateClient } = useStore();
+  const { clients, addClient, updateClient, isLoading } = useStore();
   
   const isEditing = Boolean(id);
   const existingClient = isEditing ? clients.find(c => c.id === id) : null;
@@ -74,7 +74,7 @@ export default function ClientForm() {
   }, [projectTotalValue, installmentsCount, hasInstallments]);
 
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!name || isNaN(Number(monthlyValue)) || !startDate) {
@@ -113,9 +113,9 @@ export default function ClientForm() {
     };
 
     if (isEditing && id) {
-      updateClient(id, payload);
+      await updateClient(id, payload);
     } else {
-      addClient(payload);
+      await addClient(payload);
     }
 
     navigate('/clients');
@@ -323,9 +323,9 @@ export default function ClientForm() {
 
         {/* Submit */}
         <div className="flex justify-end pt-4">
-            <button type="submit" className="btn-primary w-full sm:w-auto text-lg px-10 py-3 shadow-lg shadow-[var(--color-ls-accent)]/20 hover:shadow-[var(--color-ls-accent)]/40 hover:-translate-y-0.5 transition-all">
+            <button type="submit" disabled={isLoading} className="btn-primary w-full sm:w-auto text-lg px-10 py-3 shadow-lg shadow-[var(--color-ls-accent)]/20 hover:shadow-[var(--color-ls-accent)]/40 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                 <Save className="w-5 h-5" />
-                {isEditing ? 'Salvar Alterações' : 'Cadastrar Cliente'}
+                {isLoading ? 'Salvando...' : (isEditing ? 'Salvar Alterações' : 'Cadastrar Cliente')}
             </button>
         </div>
 
