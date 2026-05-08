@@ -1,16 +1,32 @@
-import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, UserPlus } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, Users, UserPlus, Wallet, LogOut } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useState } from 'react';
+import { useAuthStore } from '../../store/useAuthStore';
+import { useFinanceStore } from '../../store/useFinanceStore';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/clients', icon: Users, label: 'Clientes' },
   { to: '/clients/new', icon: UserPlus, label: 'Novo Cliente' },
+  { to: '/finance', icon: Wallet, label: 'Financeiro' },
 ];
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
+  const { signOut } = useAuthStore();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    // Limpar as stores no frontend (critério de segurança de sessão)
+    useFinanceStore.setState({ 
+      transactions: [], accounts: [], creditCards: [], categories: [], 
+      automationRules: [], transfers: [], workspace: null 
+    });
+    
+    await signOut();
+    navigate('/login');
+  };
 
   return (
     <>
@@ -48,6 +64,17 @@ export default function Sidebar() {
               {item.label}
             </NavLink>
           ))}
+        </div>
+
+        {/* User / Logout */}
+        <div className="p-4 border-t border-white/5">
+          <button 
+            onClick={handleSignOut}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg font-medium text-white/60 hover:bg-white/5 hover:text-red-400 transition-all duration-200 w-full"
+          >
+            <LogOut className="w-5 h-5" />
+            Sair
+          </button>
         </div>
       </nav>
       {/* Mobile Backdrop */}
