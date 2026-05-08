@@ -23,6 +23,10 @@ export default function Dashboard() {
   }, [currentDate, generateMonthlyCharges, updateOverdueStatus, clients.length]);
 
   const currentMonthCharges = charges.filter(c => {
+    const client = clients.find(cl => cl.id === c.clientId);
+    // Se o cliente foi encerrado, ocultamos as cobranças dele (exceto se já foram pagas no passado)
+    if (client?.status === 'ended' && c.status !== 'PAID') return false;
+
     const chargeDate = parseISO(c.dueDate);
     return getYear(chargeDate) === getYear(currentDate) && getMonth(chargeDate) === getMonth(currentDate);
   }).sort((a, b) => parseISO(a.dueDate).getTime() - parseISO(b.dueDate).getTime());
